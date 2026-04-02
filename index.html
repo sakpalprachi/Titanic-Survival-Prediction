@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titanic Survival Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .survived-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .not-survived-badge {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .predict-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            transition: all 0.3s ease;
+        }
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Header -->
+    <header class="glass-effect shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-ship text-3xl text-purple-600"></i>
+                    <h1 class="text-2xl font-bold text-gray-800">Titanic Survival Predictor</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">ML-Powered Prediction</span>
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Form Section -->
+            <div class="glass-effect rounded-2xl shadow-xl p-8 fade-in">
+                <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-user-edit mr-3 text-purple-600"></i>
+                    Passenger Information
+                </h2>
+                
+                <form id="predictionForm" class="space-y-6">
+                    <!-- Passenger Class -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-crown mr-2 text-yellow-500"></i>
+                            Passenger Class
+                        </label>
+                        <select id="pclass" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Select Class</option>
+                            <option value="1">1st Class (Upper)</option>
+                            <option value="2">2nd Class (Middle)</option>
+                            <option value="3">3rd Class (Lower)</option>
+                        </select>
+                    </div>
+
+                    <!-- Sex -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-venus-mars mr-2 text-pink-500"></i>
+                            Sex
+                        </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="relative">
+                                <input type="radio" name="sex" value="male" class="peer sr-only">
+                                <div class="px-4 py-3 border border-gray-300 rounded-lg cursor-pointer text-center peer-checked:bg-purple-600 peer-checked:text-white peer-checked:border-purple-600 hover:bg-gray-50 transition">
+                                    <i class="fas fa-mars mr-2"></i>Male
+                                </div>
+                            </label>
+                            <label class="relative">
+                                <input type="radio" name="sex" value="female" class="peer sr-only">
+                                <div class="px-4 py-3 border border-gray-300 rounded-lg cursor-pointer text-center peer-checked:bg-purple-600 peer-checked:text-white peer-checked:border-purple-600 hover:bg-gray-50 transition">
+                                    <i class="fas fa-venus mr-2"></i>Female
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Age -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-birthday-cake mr-2 text-blue-500"></i>
+                            Age
+                        </label>
+                        <input type="number" id="age" min="0" max="100" step="0.1" placeholder="Enter age (0-100)" 
+                               class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <div class="mt-2 flex justify-between text-xs text-gray-500">
+                            <span>0</span>
+                            <span id="ageValue" class="font-medium">-</span>
+                            <span>100</span>
+                        </div>
+                    </div>
+
+                    <!-- Fare -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-pound-sign mr-2 text-green-500"></i>
+                            Fare (£)
+                        </label>
+                        <input type="number" id="fare" min="0" max="600" step="0.1" placeholder="Enter ticket fare (0-600)" 
+                               class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <div class="mt-2 flex justify-between text-xs text-gray-500">
+                            <span>£0</span>
+                            <span id="fareValue" class="font-medium">-</span>
+                            <span>£600</span>
+                        </div>
+                    </div>
+
+                    <!-- Additional Features -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-users mr-2 text-indigo-500"></i>
+                                Siblings/Spouses
+                            </label>
+                            <input type="number" id="sibsp" min="0" max="8" value="0" 
+                                   class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-child mr-2 text-orange-500"></i>
+                                Parents/Children
+                            </label>
+                            <input type="number" id="parch" min="0" max="8" value="0" 
+                                   class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <!-- Port of Embarkation -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-anchor mr-2 text-teal-500"></i>
+                            Port of Embarkation
+                        </label>
+                        <select id="embarked" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Select Port</option>
+                            <option value="C">Cherbourg</option>
+                            <option value="Q">Queenstown</option>
+                            <option value="S">Southampton</option>
+                        </select>
+                    </div>
+
+                    <!-- Predict Button -->
+                    <button type="submit" class="predict-btn w-full py-4 text-white font-semibold rounded-lg shadow-lg">
+                        <i class="fas fa-magic mr-2"></i>
+                        Predict Survival
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div class="space-y-6">
+                <!-- Prediction Result -->
+                <div id="resultCard" class="glass-effect rounded-2xl shadow-xl p-8 hidden fade-in">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-chart-line mr-3 text-purple-600"></i>
+                        Prediction Result
+                    </h2>
+                    
+                    <div id="predictionResult" class="text-center py-8">
+                        <!-- Result will be displayed here -->
+                    </div>
+                </div>
+
+                <!-- Statistics Card -->
+                <div class="glass-effect rounded-2xl shadow-xl p-8">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-info-circle mr-3 text-purple-600"></i>
+                        About This Model
+                    </h2>
+                    
+                    <div class="space-y-4 text-gray-600">
+                        <div class="flex items-start">
+                            <i class="fas fa-brain mt-1 mr-3 text-purple-500"></i>
+                            <p class="text-sm">This machine learning model was trained on the famous Titanic dataset using historical passenger data.</p>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-chart-bar mt-1 mr-3 text-purple-500"></i>
+                            <p class="text-sm">The model considers factors like passenger class, age, sex, fare, and family relationships to predict survival probability.</p>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-percentage mt-1 mr-3 text-purple-500"></i>
+                            <p class="text-sm">Historical accuracy: Approximately 80-85% based on training data validation.</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                        <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
+                            <div class="text-2xl font-bold text-green-600">38%</div>
+                            <div class="text-sm text-gray-600">Overall Survival Rate</div>
+                        </div>
+                        <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
+                            <div class="text-2xl font-bold text-blue-600">891</div>
+                            <div class="text-sm text-gray-600">Training Samples</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Importance -->
+                <div class="glass-effect rounded-2xl shadow-xl p-8">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-ranking-star mr-3 text-purple-600"></i>
+                        Feature Importance
+                    </h2>
+                    <canvas id="featureChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-effect mt-12">
+        <div class="container mx-auto px-6 py-4">
+            <div class="text-center text-gray-600 text-sm">
+                <p>Built with machine learning and modern web technologies</p>
+                <p class="mt-2">© 2024 Titanic Survival Predictor</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
